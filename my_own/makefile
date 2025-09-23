@@ -9,7 +9,7 @@ link:
 execute:
 	./run
 
-all: compile link
+all: compile link clear-o
 
 clear-o:
 	rm *.o

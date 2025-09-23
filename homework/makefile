@@ -9,7 +9,7 @@ link:
 execute:
 	./run
 
-all:
-	nasm -f elf32 ${project_name}.asm -o ${project_name}.o
-	ld -m elf_i386 ${project_name}.o -o run
-	./run
+all: compile link clear-o
+
+clear-o:
+	rm *.o

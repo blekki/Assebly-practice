@@ -11,8 +11,14 @@ _start:
     call    sum
     mov     edi, [esp + 8]          ; parameter for the next function
     add     esp, 12                 ; free stack
-    
-    call    print
+    call    print                   ; print result of the last function 
+    call    nextln
+
+    ; addition functions
+    mov eax, 20
+    mov ebx, 17
+    call above
+    call nextln
 
     ; exit
     mov     eax, 1
@@ -22,20 +28,47 @@ _start:
 ; sum(byte num1, byte num2) -> byte result
 sum:
     pop     ecx
-
     mov     eax, [esp    ]    ; num 1
     mov     ebx, [esp + 4]    ; num 2
     add     eax, ebx          ; sum
     mov     [esp + 8], eax    ; save result
-    
     push    ecx
-
-    ; { addition test does stack work correct
-    mov     edi, eax
-    call    print
-    xor     edi, edi
+    
+    ; { addition test does stack work correct (can be turn on)
+    ; mov     edi, eax
+    ; call    print
+    ; xor     edi, edi
     ; }
 
+    ret
+
+; push parameters with the basic registers
+; above(byte num1, byte num2) -> void
+above:
+    cmp eax, ebx
+    ja equal    
+    mov     eax, 4
+    mov     ebx, 1
+    mov     ecx, msg_false
+    mov     edx, mf_len
+    int     0x80
+    ret
+equal:
+    mov     eax, 4
+    mov     ebx, 1
+    mov     ecx, msg_true
+    mov     edx, mt_len
+    int     0x80
+    ret
+
+; move to the next line
+; nextln() -> void
+nextln:
+    mov     eax, 4
+    mov     ebx, 1
+    mov     ecx, newline
+    mov     edx, newline_len
+    int 0x80
     ret
 
 ; push parameters with edi register
@@ -52,4 +85,12 @@ print:
     ret
 
 section .data
-    symbol db '0'
+    symbol dw '0'
+
+    msg_false   dw "false"
+    mf_len      equ $ - msg_false
+    msg_true    dw "true"
+    mt_len      equ $ - msg_true
+
+    newline     dw 0x0A             ; '\n'
+    newline_len equ $ - newline

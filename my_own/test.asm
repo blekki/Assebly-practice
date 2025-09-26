@@ -2,23 +2,34 @@ section .text
     global _start
 
 _start:
-    sub esp, 8
-    mov ecx, 1
-    mov dword [esp + 4], ecx    ; iter
-    mov dword [esp    ], 123456 ; our value
+
+    mov eax, 123456     ; our parameter
+    call intToStr
+
+    ; exit
+    mov eax, 1
+    int 0x80
+
+
+intToStr:
+    mov cl, 1
+    sub esp, 5
+    mov byte  [esp + 4], cl    ; iter
+    mov dword [esp    ], eax    ; our parameter
     
-; { begin
+; { start loop
+    xor ecx, ecx
 l1: 
-    mov [esp + 4], ecx      ; save iter
+    mov [esp + 4], byte cl      ; save iter
     mov eax, [esp]
 
     cmp eax, 0
     ja a
-    jmp exit
+    jmp ex
 a:  
-    inc dword [esp + 4]     ; add additional iteration
+    inc byte [esp + 4]     ; add additional iteration
     
-    ; eax % 10
+    ; (eax % 10) = (edx:eax)
     xor edx, edx    ; clear edx
     mov ebx, 10
     div ebx
@@ -28,13 +39,12 @@ a:
     mov edi, edx    
     call printNum2
 
-    mov ecx, [esp + 4]
+    mov cl, byte [esp + 4]      ; recover iter
     loop l1
-; } end
-exit:
-    add esp, 8      ; free stack
-    mov eax, 1      ; exit
-    int 0x80
+; } end loop
+ex:
+    add esp, 5      ; free stack
+    ret
 
 printSym:
     mov eax, 4

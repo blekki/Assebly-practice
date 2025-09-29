@@ -5,6 +5,7 @@ _start:
 
     ; ### stack as buffer ###
     sub esp, 10     ; reserve stack
+    
     cld
     lea edi, [esp]  ; in current situation [esp] it's our [buffer]
     mov al, '1'     ; value
@@ -29,6 +30,7 @@ _start:
     mov cl, 10      ; repeat times
     rep stosb
 
+    ; print
     mov eax, 4
     mov ebx, 1
     mov ecx, buffer

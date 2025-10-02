@@ -23,11 +23,20 @@ _start:
     add esp, 10     ; clear stack after all
 
     ; ### reserved data as buffer ###
+    ; fill first part
     cld
     lea edi, [buffer]
     mov al, '2'     ; value
     xor ecx, ecx    ; clear ecx register
-    mov cl, 10      ; repeat times
+    mov cl, 5       ; repeat times
+    rep stosb
+
+    ; fill second part
+    cld
+    lea edi, [buffer + 5]
+    mov al, '3'     ; value
+    xor ecx, ecx    ; clear ecx register
+    mov cl, 5       ; repeat times
     rep stosb
 
     ; print

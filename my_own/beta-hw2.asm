@@ -1,3 +1,7 @@
+; !!!-------------------------------!!!
+; ########## NOT ACTUAL CODE ##########
+; !!!-------------------------------!!! 
+
 ; ##### constants section #####
 BUFFER_MAX_LEN equ 10
 
@@ -22,7 +26,7 @@ intToStr:
     mov cl, 1
     sub esp, 5
     ; todo: save number length
-    mov byte  [esp + 4], cl    ; iter
+    mov byte  [esp + 4], cl     ; iter
     mov dword [esp    ], eax    ; our parameter
     
 ; { start loop

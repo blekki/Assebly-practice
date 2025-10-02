@@ -6,7 +6,7 @@ section .text
     global _start
 
 _start:
-    ; if you wan't check your number, change eax register value
+    ; if you want check your number, change EAX register value
     mov     eax, 17    ; <-- change here
     call printNum
     call isPrimal
@@ -18,7 +18,7 @@ _start:
 isPrimal:
     ; reserve stack space
     add     esp, 12
-    mov     dword [esp + 8], 1    ; iter count      ; todo: it can be 1 byte, not 4
+    mov     dword [esp + 8], 1    ; iter count
     mov     dword [esp + 4], 2    ; save divisor
     mov     dword [esp    ], eax  ; save our number
     
@@ -33,12 +33,13 @@ e1:
     jmp     isPrimal_ex
 ex1:
 
-    ; loop begin
-    mov     ecx, [esp + 8]  ; recover iter
+; loop begin
+    xor ecx, ecx
+    mov     ecx, [esp + 8]      ; recover iter
 l1:
-    mov     [esp + 8], ecx  ; save iter
-    mov     ebx, [esp + 4]  ; load our divisor
-    mov     eax, [esp]      ; load our value
+    mov     [esp + 8], ecx      ; save iter
+    mov     ebx, [esp + 4]      ; load our divisor
+    mov     eax, [esp]          ; load our value
     
     ; check does (ebx != num)
     cmp     eax, ebx
@@ -46,15 +47,14 @@ l1:
     call    printOk
     jmp     isPrimal_ex
 ne:
-
     ; divide
-    xor     edx, edx    ; clear edx register
+    xor     edx, edx            ; clear edx register
     div     ebx
 
     ; check does (num % ebx == 0)
     cmp     edx, 0
     je      e2
-    ; if not, it tries again with other divisor
+    ; else it tries again with other divisor
     inc     dword [esp + 8]     ; additional iter
     inc     dword [esp + 4]     ; next devisor
     jmp     ex2
@@ -64,41 +64,42 @@ e2:
 ex2:
     mov     ecx, [esp + 8]      ; recover iter
     loop    l1
-    ; loop end
+; loop end
 
 isPrimal_ex:
-    sub     esp, 12     ; free stack
+    sub     esp, 12             ; free stack
     ret
 
 ; ----------------------------------------
 ; ##### "print in sonsole" functions #####
 printNum:
-    mov esi, eax
-    xor ecx, ecx
-    mov cl, 1
-    add esp, 16
-    mov [esp + 15], cl      ; iter    
-    mov [esp + 11], esi     ; number
-    mov [esp + 10], byte 0  ; char[].len
-    ;   [esp     ], char[] (as buffer)
+    mov     esi, eax
+    xor     ecx, ecx
+    mov     cl, 1
+    add     esp, 16
+    mov     [esp + 15], cl      ; iter    
+    mov     [esp + 11], esi     ; number
+    mov     [esp + 10], byte 0  ; char[].len
+    ;       [esp     ]          ; char[] (as buffer)
 
     ; check does (source_value != 0)
-    cmp eax, 0
-    jne l2
-    push esi
-    mov esi, 0
-    call printSym
-    pop esi
-    jmp l3_ex
+    cmp     eax, 0
+    jne     l2
+    push    esi
+    mov     esi, 0
+    call    printSym
+    pop     esi
+    jmp     l3_ex
 l2:
-    mov [esp + 15], byte cl
-    mov eax, [esp + 11]     ; load num
+    mov     [esp + 15], byte cl     ; save iter
+    mov     eax, [esp + 11]         ; load num
     
-    cmp eax, 0
-    ja a
-    jmp l2_ex
+    ; check does (eax != 0)
+    cmp     eax, 0
+    ja      a
+    jmp     l2_ex
 a:
-    inc byte [esp + 15]
+    inc     byte [esp + 15]
 
     ; (eax % 10) = (edx:eax)
     xor     edx, edx
@@ -107,19 +108,20 @@ a:
     mov     [esp + 11], eax         ; save modified basic num (eax part)
     add     dl, byte '0'            ; convert num into ascii  (edx part)
 
-    xor eax, eax
+    ; save number
+    xor     eax, eax
     mov     al, byte [esp + 10]
     mov     [esp + eax], byte dl
     inc     byte [esp + 10]
 
-    xor ecx, ecx
-    mov cl, byte [esp + 15]
-    loop l2
+    xor     ecx, ecx
+    mov     cl, byte [esp + 15]     ; recover iter
+    loop    l2
 l2_ex:
 
-    mov cl, byte [esp + 10]
+    mov     cl, byte [esp + 10]
 l3:
-    mov byte [esp + 15], cl
+    mov     byte [esp + 15], cl
 
     ; clear registers
     xor     eax, eax
@@ -129,41 +131,33 @@ l3:
     ; get stack elem address from back
     mov     al, cl
     dec     al
-
-    ; get buffer elem address from front
-    ; mov     bl, byte [esp + 10]
-    ; dec     bl
-    ; sub     bl, al
-    
-    ; xor     ecx, ecx
-    ; mov     cl, byte [esp + ebx]    ; get symbol
-
     mov     bl, byte [esp + eax]
 
-    mov eax, ebx
-    sub eax, '0'
-    call printSym
+    ; print symbol
+    mov     eax, ebx
+    sub     eax, '0'
+    call    printSym
     
-    xor ecx, ecx
-    mov cl, byte [esp + 15] ; recover iter
-    loop l3
+    xor     ecx, ecx
+    mov     cl, byte [esp + 15]     ; recover iter
+    loop    l3
 l3_ex:
-    call printNewline
-    sub esp, 16
-    mov eax, esi
+    call    printNewline
+    sub     esp, 16                 ; clear stack
+    mov     eax, esi
     ret
 ; ----------------------------------
 printSym:
-    add eax, dword '0'
-    push eax
+    add     eax, dword '0'
+    push    eax
 
-    mov eax, 4
-    mov ebx, 1
-    mov ecx, esp
-    mov edx, 1
-    int 0x80
+    mov     eax, 4
+    mov     ebx, 1
+    mov     ecx, esp
+    mov     edx, 1
+    int     0x80
 
-    pop eax
+    pop     eax
     ret
 
 printOk:
@@ -201,5 +195,3 @@ section .data
     
     newline      dw 0x0A     ; newline ascii code
     newline_len  equ $ - newline
-
-    ; num resb (4)

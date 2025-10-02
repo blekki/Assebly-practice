@@ -8,20 +8,20 @@ section .text
 _start:
     mov [num_len], byte 0
     
-    ; todo: where to save???
-
-    mov     esi, 123456789     ; our value/parameter
-    ; mov     edi, buffer
+    mov     esi, 123456789          ; source (our value).
+;   mov     esi, [num]              ; alternative way push value
+    mov     edi, buffer             ; destination
     call    intToStr                ; call convertor
 
-exit:
+print_res:
     ; print result
     mov     eax, 4
     mov     ebx, 1
-    mov     ecx, buffer
+    mov     ecx, edi
     mov     edx, [num_len]
     int     0x80
-    ; exit
+
+exit:
     mov     eax, 1
     int     0x80
 
@@ -29,9 +29,9 @@ intToStr:
     ; check does (esi != 0)
     cmp     esi, 0
     jne     continue
-    mov     [buffer], byte '0'
+    mov     [edi], byte '0'
     inc     byte [num_len]
-    jmp     exit
+    jmp     print_res
 continue:
     xor     ecx, ecx                ; clear the ecx register
     mov     cl,  1
@@ -88,7 +88,7 @@ l2:
     sub     bl, al
     xor     ecx, ecx
     mov     cl, byte [esp + ebx]    ; get symbol
-    mov     [buffer + eax], byte cl ; save symbol in buffer
+    mov     [edi + eax], byte cl    ; save symbol in buffer
 
     xor     ecx, ecx                ; clear ecx register after operations
     mov     cl, byte [esp + 14]     ; load iter
@@ -97,24 +97,10 @@ l2_ex:
     add     esp, 15                 ; free stack
     ret
 
-; ##### other functions #####
-printNum:
-    add edi, dword '0'
-    push edi
-
-    mov eax, 4
-    mov ebx, 1
-    mov ecx, esp
-    mov edx, 1
-    int 0x80
-
-    pop edi
-    ret
 ; ##### data section #####
-
 section .data
-    num     dw 9999     ; our number/integer
+    num     dd 101010   ; our alternative number
     
 section .bss
-    buffer:  resb BUFFER_MAX_LEN
+    buffer:  resb BUFFER_MAX_LEN    ; our place for saving results
     num_len: resb 1     ; intToString convertor variable

@@ -128,3 +128,20 @@ docker stop dev-env-asm32-1
 ```shell
 docker image rm dev-env-asm32 --force
 ```
+
+## Compile specific projects
+The reposetory contains a couple specific projects that work with include **(.inc)** files. To compile them use one of the prepared commands in the **./homework** folder ```cd ./homework```, makefile does all the work:
+
+* **hw4-1** (iteration version)
+```shell
+    make hw4-v1-compile
+```
+* **hw4-2** (recursion version)
+```shell
+    make hw4-v2-compile
+```
+
+And after just **run** the execution file:
+```shell
+    ./run
+```

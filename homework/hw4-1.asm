@@ -7,8 +7,8 @@ section .text
     global _start
 
 _start:
-    xor     eax, eax    ; clear register
-    mov     ax,  word 5 ; our source number
+    xor     eax, eax     ; clear register
+    mov     ax,  word 10 ; our source number
     
     ; print our value
     mov     esi, eax
@@ -34,19 +34,18 @@ _start:
 ; fn factorial(ax: source-value) -> dx:ax
 factorial:
     mov     cx, ax
-    add     esp, 10
+    sub     esp, 10
     ;       [esp + 8], word 0   ; dx buffer
     ;       [esp + 6], word 0   ; ax buffer
     mov     [esp + 4], word 0   ; dx after mul
     mov     [esp + 2], word ax  ; ax after mul
     mov     [esp    ], cx       ; iter (num/cx)
     
-    ; if (ax == 1) --> return 1
+    ; # If (ax > 1) --> find factorial
+    ; # else find easier way
     cmp     ax, 1
-    jne     continue
-    mov     [esp + 2], word 1
+    ja      continue
     jmp     l1_end
-    ; else find factorial  
 continue:
     dec     word [esp]      ; multiplies always lower by 1 then factorial base
 
@@ -54,6 +53,7 @@ continue:
     mov     cx,  word [esp]
 l1:
     mov     [esp], word cx  ; save iter
+    
     ; preparation to the calculation
     xor     eax, eax
     xor     ebx, ebx
@@ -66,18 +66,19 @@ l1:
     mov     bx, [esp]
     mul     bx
     ; save pre-result
-    add     [esp + 8], dx
-    add     [esp + 6], ax
+    mov     [esp + 8], dx
+    mov     [esp + 6], ax
 
     ; # DX mul
     mov     ax, [esp + 4]   ; dx:--
     mov     bx, [esp]
     mul     bx
-    ; add pre-result
-    add     dx, [esp + 8]
-    add     ax, [esp + 6]
 
-    ; save full pre-result for the next iteration
+    ; calculate final result
+    mov     dx, ax
+    add     dx, [esp + 8]
+    mov     ax, [esp + 6]
+    ; relocate final result for the next iteration
     mov     [esp + 4], dx
     mov     [esp + 2], ax
 
@@ -91,5 +92,5 @@ l1_end:
     xor     eax, eax
     mov     dx,  word [esp + 4]
     mov     ax,  word [esp + 2]
-    sub     esp, 10
+    add     esp, 10
     ret

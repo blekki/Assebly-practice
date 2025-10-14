@@ -38,12 +38,28 @@ printLF:
     int     0x80
     ret
 
+printSym:
+    push eax
+    
+    mov     ecx, [esp]  ; string
+    mov     edx, 1
+    mov     eax, 4
+    mov     ebx, 1
+    int     0x80
+    
+    pop eax
+    ret
+
 printPrimeNum:
-    add eax, '0'
-    mov [prime_num], eax   ; save value in buffer
-    mov eax, prime_num     ; get buffer ptr
-    mov ebx, 1          ; set length
-    call printStr
+    add     eax, '0'            ; convert into ASCII
+    mov     [prime_num], eax    ; save value in buffer
+
+    mov     eax, 4
+    mov     ebx, 1
+    mov     ecx, prime_num
+    mov     edx, 1
+    int     0x80
+
     ret
 
 

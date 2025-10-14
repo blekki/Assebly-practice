@@ -10,8 +10,7 @@ section .text
 
 _start:
     xor eax, eax            ; clear register
-    mov ax, word 2          ; our source number
-    ; !!! bug: if (ax = 1) res = 0
+    mov ax, word 6          ; our source number
     
     ; print our value
     mov esi, eax
@@ -20,7 +19,7 @@ _start:
     mov eax, esi    ; recover value
 
     ; get factorial
-    call factorial
+    call factorial  ; fn factorial(ax: source-value) -> dx:ax
 
     ; print result
     shl edx, 16
@@ -32,8 +31,9 @@ _start:
     ; exit
     mov eax, 1
     int 0x80
-    
-factorial:  ; fn factorial(ax: source-value) -> dx:ax
+
+; fn factorial(ax: source-value) -> dx:ax
+factorial:
     mov cx, ax
     add esp, 10
     ;   [esp + 8], word 0   ; dx buffer
@@ -42,15 +42,19 @@ factorial:  ; fn factorial(ax: source-value) -> dx:ax
     mov [esp + 2], word ax  ; ax after mul
     mov [esp    ], cx       ; iter (num/cx)
     
-    dec word [esp]
-    
-    ; todo: if [esp] == 0 --> exix
+    ; if (ax = 1) --> result = 1
+    cmp ax, 1
+    jne continue
+    mov [esp + 2], word 1
+    jmp l1_end
+continue:
+    dec word [esp]  ; multiplies always lower by 1 then factorial base
     
     xor ecx, ecx
     mov cx, word [esp]
 l1:
     mov [esp], word cx       ; save iter
-    ; preparation
+    ; preparation to the calculation
     xor eax, eax
     xor ebx, ebx
     xor edx, edx
@@ -77,38 +81,11 @@ l1:
     mov [esp + 4], dx
     mov [esp + 2], ax
 
-    ; --- error ---
-    ; mov esi, [esp]
-    ; call printInt
-    ; call printLF
-    ; mov [esp], word 1
-
-    ; # work version
-    ; mov eax, 0
-    ; call printPrimeNum
-    ; call printLF
-
-    ; mov eax, 4
-    ; mov ebx, 1
-    ; mov ecx, say
-    ; mov edx, say_len
-    ; int 0x80
-
-    ; mov eax, prime_say
-    ; mov ebx, say_len
-    ; call printPrimeNum
-
-
-    ; mov eax, [esp]
-    ; call printPrimeNum
-    
-    ; -------------
-
+    ; preparation to the next iter
     xor ecx, ecx
     mov cx, word [esp]       ; recover iter
     loop l1
-; l1_end:
-
+l1_end:
     ; return result
     xor edx, edx
     xor eax, eax
@@ -116,8 +93,3 @@ l1:
     mov ax, word [esp + 2]
     sub esp, 10
     ret
-
-section .data
-    say         dw '0'     ; newline ascii code
-    prime_say   dw 9     ; newline ascii code
-    say_len     equ $ - say

@@ -78,9 +78,8 @@ next_iter:
     mov     ax, [esp + 4]   ; dx:--
     mov     bx, [esp]
     mul     bx
-    ; add the pre-result for getting a full result
 
-    ; final result
+    ; get final result
     mov     dx, ax
     add     dx, [esp + 8]
     mov     ax, [esp + 6]

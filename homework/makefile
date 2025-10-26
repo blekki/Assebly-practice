@@ -32,4 +32,12 @@ hw4-v2-compile:
 	nasm -f elf32 inc/${file3}.inc -o ${file3}.o
 	ld -m elf_i386 ${hw4-2}.o ${file2}.o ${file3}.o -o run
 	rm *.o
+
+
+hw5-compile:
+	nasm -f elf32 hw5.asm -o hw5.o
+	nasm -f elf32 inc/${file2}.inc -o ${file2}.o
+	nasm -f elf32 inc/${file3}.inc -o ${file3}.o
+	ld -m elf_i386 hw5.o ${file2}.o ${file3}.o -o run
+	rm *.o
 	

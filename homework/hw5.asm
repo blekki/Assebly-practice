@@ -3,8 +3,8 @@ extern printPrimeNum
 extern printLF
 
 ; ##### constants #####
-WIDTH equ (10 + 2) ; two bytes for the feed line
-HEIGHT equ 10
+WIDTH equ (36 + 2) ; two bytes for the feed line
+HEIGHT equ 18
 
 BORDER equ '#'
 SPACE  equ ' '
@@ -20,12 +20,20 @@ _start:
     int 0x80
 
 printEnvelope:
+    call bufferInit
     call printHat
-
     call printCentre
-    ; print envelope centre
-
     call printHat
+    ret
+
+; add feedLine
+bufferInit:
+    ; add ASCII CR
+    mov eax, (WIDTH - 2)
+    mov [line + eax], byte 13
+    ; add ASCII LF
+    mov eax, (WIDTH - 1)
+    mov [line + eax], byte 10
     ret
 
 ; print line as border
@@ -33,12 +41,11 @@ printHat:
     ; fill line as border but without last two bytes
     mov ecx, (WIDTH - 2)
 l_hat:
-    dec ecx     ; need to dec ecx, because loop can't process index as 0
+    dec ecx     ; need to dec ecx, because else loop finishes execution before 0 index is set
     mov [line + ecx], byte BORDER
-    inc ecx     ; return state
+    inc ecx     ; return previously state
     loop l_hat
 
-    call addFL
     call print
     ret
 
@@ -57,24 +64,12 @@ l1_centre:
     loop l1_centre
 ; l1_centre end
 
-    ; left and right borders
-    ; mov [line + 0], byte '+'
-    ; mov [line + (WIDTH - 3)], byte '+'
-
     ; dot pos
     xor edx, edx
     mov eax, (WIDTH - 2)
     mov ebx, HEIGHT
     div ebx
-    ; sub ax, word 1  ; position into indexes standart: from 0 to (WIDTH - 1)
     mov [esp + 2], ax
-
-    ; ; lines count in centre
-    ; mov eax, (HEIGHT - 2)   ; height without hats
-    ; mov ebx, 2
-    ; div ebx
-    ; xor ecx, ecx
-    ; mov cx, ax   ; height without hats
 
     mov ecx, (HEIGHT - 2)
 l2_centre:
@@ -94,15 +89,11 @@ l2_centre:
     sub ebx, eax            ;
     mov [line + ebx], byte BORDER
 
-    ; print line
-    call print
+    call print  ; print line
+    ; Ps: fn print dosn't change EAX and EBX registers
 
     ; clear dots after printing
-    mov ax, [esp + 4]       ; get dot front pos
     mov [line + eax], byte SPACE
-    ; -
-    mov ebx, (WIDTH - 3)    ; get dot back pos
-    sub ebx, eax            ;
     mov [line + ebx], byte SPACE
     
     xor ecx, ecx        ; clear register
@@ -113,22 +104,19 @@ l2_centre:
     add esp, 6
     ret
 
-; add sign to ride next line
-addFL:
-    mov eax, (WIDTH - 2)
-    mov [line + eax], byte 13
-
-    mov eax, (WIDTH - 1)
-    mov [line + eax], byte 10
-    ret
-
 ; print our line
 print:
+    push eax
+    push ebx
+    
     mov eax, 4
     mov ebx, 1
     mov ecx, line
     mov edx, WIDTH
     int 0x80
+
+    pop ebx
+    pop eax
     ret
 
 

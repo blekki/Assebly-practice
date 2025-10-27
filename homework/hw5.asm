@@ -2,12 +2,10 @@
 extern printPrimeNum
 extern printLF
 
-; ##### constants #####
-; an envelope size
-WIDTH   equ (36 + 2) ; two additional bytes for the feed line flag
-HEIGHT  equ 18
+; ##### constants ##
 ; an envelope colors
 BORDER  equ '#'
+DOT     equ '#'
 SPACE   equ ' '
 
 ; ### MAIN PROGRAM ###
@@ -15,12 +13,19 @@ section .text
     global _start
 
 _start:
+    mov ah, 36              ; width
+    mov al, 18              ; heigth
     call    printEnvelope
+
     ; exit
     mov     eax, 1
     int     0x80
 
+; ### Functions ###
 printEnvelope:
+    mov [width], ah
+    mov [heigth], al
+    
     call    bufferInit
     call    printHat
     call    printCentre
@@ -29,74 +34,89 @@ printEnvelope:
 
 ; add feedLine
 bufferInit:
-    mov     eax, (WIDTH - 2)
+    mov eax, [width]                ; max_line_index + 1
     mov     [line + eax], byte 13   ; add ASCII CR
-    mov     eax, (WIDTH - 1)
+    add eax, 1                      ; max_line_index + 2
     mov     [line + eax], byte 10   ; add ASCII LF
     ret
 
 ; print line as border
 printHat:
-    ; fill line as border but without last two bytes
-    mov     ecx, (WIDTH - 2)
+    ; fill line as top/bottom border
+    xor ecx, ecx
+    mov cl, [width]
 l_hat:
-    dec     ecx     ; Need to dec ecx, because else loop finishes execution before 0 index is set
+    ; Need to dec and after inc ecx,
+    ; because else loop finishes execution one operation earlier,
+    ; and then zero index isn't set
+    dec     ecx
     mov     [line + ecx], byte BORDER
-    inc     ecx     ; return previously state
+    inc     ecx
     loop    l_hat
 ; l_hat end
-    call    print
+    call    print               ; print hat
     ret
 
 ; print envelope centre
 printCentre:
-    sub     esp, 6
-    mov     [esp + 4], word 0   ; current dot position
-           ;[esp + 2], word 0   ; dot offset
-           ;[esp    ], word 0   ; iter
+    sub     esp, 3
+    mov     [esp + 2], byte 0   ; current dot position
+    ;       [esp + 1], byte 0   ; dot offset
+    ;       [esp    ], byte 0   ; iter
 
-    ; clear line (borders is kept after printHat)
-    mov     ecx, (WIDTH - 4)
+    ; clear line (but keep borders after printHat)
+    xor     ecx, ecx
+    mov     cl, [width]
+    sub     cl, 2
 l1_centre:
     mov     [line + ecx], byte SPACE
     loop    l1_centre
-; l1_centre end
+; l1_centre loop
 
-    ; dot pos
+    ; get dot offset
+    xor     eax, eax
+    xor     ebx, ebx
     xor     edx, edx
-    mov     eax, (WIDTH - 2)
-    mov     ebx, HEIGHT
-    div     ebx
-    mov     [esp + 2], ax
+    mov     al, [width]
+    mov     bl, [heigth]
+    div     bl
+    mov     [esp + 1], al   ; save dot offset
 
-    mov     ecx, (HEIGHT - 2)
+    ; print dots
+    xor     ecx, ecx
+    mov     cl, [heigth]
+    sub     cl, 2
 l2_centre:
-    mov     [esp], cx           ; save iter
+    mov     byte [esp], cl  ; save iter
 
     ; next dot pos
     xor     eax, eax
-    mov     ax, [esp + 2]
-    add     [esp + 4], ax
+    mov     al, [esp + 1]   ; take offset
+    add     [esp + 2], al   ; add offset to the old pos
     
     ; write dots in line
-    mov     ax, [esp + 4]       ; get dot front pos
-    mov     [line + eax], byte BORDER
-    mov     ebx, (WIDTH - 3)    ; width offset
-    sub     ebx, eax            ; get dot back pos
-    mov     [line + ebx], byte BORDER
-
-    call    print               ; print line
-    ; fn "print" dosn't change EAX and EBX registers
+    xor     eax, eax
+    mov     al, [esp + 2]   ; get front dot pos
+    mov     [line + eax], byte DOT
     
-    ; clear dots after printing
+    xor     ebx, ebx
+    mov     bl, [width]
+    dec     bl
+    sub     bl, al          ; get back dot pos
+    mov     [line + ebx], byte DOT
+
+    call    print           ; print line
+    
+    ; Clear dots after printing line.
+    ; Fn "print" didn't change EAX and EBX registers values
     mov     [line + eax], byte SPACE
     mov     [line + ebx], byte SPACE
     
-    xor     ecx, ecx            ; clear register
-    mov     cx, [esp]           ; recover iter
+    xor     ecx, ecx        ; clear register
+    mov     cl, byte [esp]  ; recover iter
     loop    l2_centre
-; l2_centre end
-    add     esp, 6
+; end loop
+    add     esp, 3
     ret
 
 ; print our line
@@ -104,16 +124,19 @@ print:
     push    eax
     push    ebx
     
+    xor     edx, edx
     mov     eax, 4
     mov     ebx, 1
     mov     ecx, line
-    mov     edx, WIDTH
+    mov     dl, [width]
+    add     dl, 2
     int     0x80
 
     pop     ebx
     pop     eax
     ret
 
-
 section .bss
-    line: resb WIDTH
+    line:   resb 255 + 2    ; two bytes for CR and FL
+    heigth: resb 1
+    width:  resb 1

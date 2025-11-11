@@ -4,6 +4,7 @@ section .text
     global printInt         ; print integer value
     global printStr         ; print string
     global printLF          ; print "\n" (get next line). LF = line feed
+    global printSym
     global printPrimeNum    ; print prime number (auto convert num into char)
 
 printInt:
@@ -38,16 +39,13 @@ printLF:
     int     0x80
     ret
 
-printSym:
-    push eax
-    
-    mov     ecx, [esp]  ; string
-    mov     edx, 1
+printSym:   ; error: doesn't work
+    mov     [prime_num], eax
     mov     eax, 4
     mov     ebx, 1
+    mov     ecx, prime_num  ; string
+    mov     edx, 1
     int     0x80
-    
-    pop eax
     ret
 
 printPrimeNum:
@@ -62,8 +60,7 @@ printPrimeNum:
 
     ret
 
-
 section .data
     newline      dw 0x0A     ; newline ascii code
     newline_len  equ $ - newline
-    prime_num dw '0'
+    prime_num dw '0'    ; todo: rename as "buffer"

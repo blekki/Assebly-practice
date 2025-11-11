@@ -21,7 +21,7 @@ _start:
     mov bx, 2
     mov cx, 10
     call printArray
-    call sort
+    ; call sort
 
 
     mov eax, 1
@@ -135,25 +135,25 @@ above:
 
 
 printArray:
-    ; push esi
-    ; push edi
-    push ebx
+    push ebx    ; # note: push for showing the immutability of a number
     push ecx
-    sub esp, 12
-    mov [esp + 8], word 0   ; pos-offset
-    mov [esp + 4], ebx  ; num size
-    mov [esp    ], ecx  ; len/iter
+    sub esp, 16
+    mov [esp + 12], esi      ; source
+    mov [esp +  8], ebx      ; num size
+    mov [esp +  4], dword 0  ; pos-offset (changeable)
+    mov [esp     ], ecx      ; iter/len   (changeable)
 
 l_3:
     mov [esp], ecx   ; save iter
     
+    ; preparation
     mov eax, 0
-    mov [buffer], eax   ; clear buffer
-    mov esi, source
-    mov edi, buffer
+    mov [buffer], eax       ; clear buffer
+    mov esi, [esp + 12]     ; recover source
+    mov edi, buffer         ; recover destination
 
     ; copy part of source
-    add esi, [esp + 8]  ; begin point
+    add esi, [esp + 4]  ; begin point
     mov ecx, 2  ; size
     cld
     rep movsb   ; copy bytes
@@ -162,9 +162,9 @@ l_3:
     mov esi, [buffer]
     call printInt
 
-    ; ; get next position (offset)
-    mov eax, [esp + 4]
-    add [esp + 8], eax
+    ; update offset
+    mov eax, [esp + 8]
+    add [esp + 4], eax
 
     ; print tiny space between characters
     mov eax, ' '
@@ -174,13 +174,13 @@ l_3:
     mov ecx, [esp]
     loop l_3
 ; loop end
+    call printLF    ; final feedline
 
-    call printLF
-    add esp, 12
+    ; free memory and recover values
+    mov esi, [esp + 12]
+    add esp, 16
     pop ecx
     pop ebx
-    ; pop edi
-    ; pop esi
     ret
 
 section .bss

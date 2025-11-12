@@ -1,5 +1,4 @@
 ; ### area of extern functions/procedures ###
-extern printPrimeNum
 extern printLF
 extern printInt
 extern printSym

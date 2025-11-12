@@ -4,9 +4,6 @@ extern printLF
 extern printInt
 extern printSym
 
-; ### constants ###
-; ARRAY_LEN equ 100
-
 ; ### base ###
 section .text
     global _start
@@ -57,11 +54,10 @@ sort:
 l_1:
     mov [esp + 2], cx   ; save iter
 
-    ; set l_2 offset
+    ; prepare
     mov ax, [esp + 6]
-    mov [esp + 8], ax
-    ; reset min value address
-    mov [esp + 10], ax
+    mov [esp + 8], ax   ; set l_2 offset
+    mov [esp + 10], ax  ; reset min value address
 
 ; ### find minimum
     mov cx, [esp + 2]   ; start with (l_1) iter value
@@ -74,12 +70,34 @@ l_2:
     xor ebx, ebx
     xor ecx, ecx
     xor edx, edx
+
+    ; todo: дати можливість витягувати скільки треба бaйтів
     ; num A (current)
     mov cx, [esp + 8]
-    mov ax, [destination + ecx]
+    mov ax, [destination + ecx]     ; todo: need update
     ; num B (last min)
     mov dx, [esp + 10]
+    mov bx, [destination + edx]     ; todo: need update
+
+    ; copy bytes
+    cmp word [esp], 1   ; copy 1 byte
+    je copy_byte
+    cmp word [esp], 2   ; copy 2 byte
+    je copy_word
+    cmp word [esp], 4   ; copy 4 byte
+    je copy_dword
+copy_byte:
+    mov al, [destination + ecx]
+    mov bl, [destination + edx]
+    jmp copy_done
+copy_word:
+    mov ax, [destination + ecx]
     mov bx, [destination + edx]
+    jmp copy_done
+copy_dword:
+    mov eax, [destination + ecx]
+    mov ebx, [destination + edx]
+copy_done:
 
     ; ; debug: print min value
     ; push ax
@@ -89,7 +107,7 @@ l_2:
     ; pop bx
     ; pop ax
 
-    cmp ax, bx  ; if (A[i] < min) save new min value
+    cmp eax, ebx  ; if (A[i] < min) save new min value
     ja cont    ; if above -> do nothing
     mov ax, [esp + 8]   ; get current pos
     mov [esp + 10], ax  ; save min value pos in dest
@@ -100,11 +118,31 @@ cont:
     ; recover iter
     xor ecx, ecx
     mov cx, [esp + 4]
-    loop l_2
+    dec cx
+    jnz l_2
+    ; loop l_2
 ; end loop (l_2)
 
-    ; swap
+    ; swap bytes
     xor edx, edx
+    cmp word [esp], 1   ; copy 1 byte
+    je swap_byte
+    cmp word [esp], 2   ; copy 2 byte
+    je swap_word
+    cmp word [esp], 4   ; copy 4 byte
+    je swap_dword
+swap_byte:
+    jmp swap_done
+    mov dx, [esp + 10]
+    mov al, [destination + edx] ; save min (min -> A)
+    mov dx, [esp + 6]
+    mov bl, [destination + edx] ; save cur (cur -> B)
+    ;
+    mov dx, [esp + 10]
+    mov [destination + edx], bl ; B -> min
+    mov dx, [esp + 6]
+    mov [destination + edx], al ; A -> cur
+swap_word:
     mov dx, [esp + 10]
     mov ax, [destination + edx] ; save min (min -> A)
     mov dx, [esp + 6]
@@ -114,6 +152,18 @@ cont:
     mov [destination + edx], bx ; B -> min
     mov dx, [esp + 6]
     mov [destination + edx], ax ; A -> cur
+    jmp swap_done
+swap_dword:
+    mov dx, [esp + 10]
+    mov eax, [destination + edx] ; save min (min -> A)
+    mov dx, [esp + 6]
+    mov ebx, [destination + edx] ; save cur (cur -> B)
+    ;
+    mov dx, [esp + 10]
+    mov [destination + edx], ebx ; B -> min
+    mov dx, [esp + 6]
+    mov [destination + edx], eax ; A -> cur
+swap_done:
 
     ; ; debug: print dest
     ; push esi
@@ -192,7 +242,7 @@ section .bss
     buffer: resb 4
 
 section .data
+    ; source db   9, 8, 7, 6, 5, 44, 3, 2, 0, 1
     source dw   9, 1880, 7, 66, 5, 44, 3, 2, 0, 1
-    ; source dw   9, 8, 7, 6, 5, 4, 3, 2, 0, 1
-    ; source dw   0, 2, 3, 2, 7, 9, 4, 2, 8, 1
+    ; source dd   2000, 50000, 3000, 4000, 0, 1, 6000, 80000, 9, 20
     source_byte_len equ $ - source

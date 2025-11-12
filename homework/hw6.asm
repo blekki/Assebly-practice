@@ -5,7 +5,7 @@ extern printInt
 extern printSym
 
 ; ### constants ###
-ARRAY_LEN equ 100
+; ARRAY_LEN equ 100
 
 ; ### base ###
 section .text
@@ -21,7 +21,9 @@ _start:
     mov bx, 2
     mov cx, 10
     call printArray
-    ; call sort
+    call sort
+    mov esi, edi
+    call printArray
 
 
     mov eax, 1
@@ -32,139 +34,189 @@ _start:
 ; cx - elem count
 ; bx - symbol size
 sort:
-    sub esp, 16
-    mov [esp + 12], byte 0    ; start pos (l_2)
-    mov [esp + 10], byte 0    ; current pos (l_1)
-    ; mov [esp + 8], word 0xFF    ; min value
-    ; mov [esp + 6], word 0xFF    ; min value pos
-    mov [esp + 4], bx   ; elem size
-    mov [esp + 2], cx   ; (iter l_2)
-    mov [esp    ], cx   ; (iter l_1)/elem count
+    push bx
+    push cx
+    sub esp, 12
+    mov [esp + 10], word 0    ; min value address (offset)
+    mov [esp +  8], word 0    ; offset (l_2)
+    mov [esp +  6], word 0    ; offset (l_1)
+    mov [esp +  4], cx   ; (iter l_2)
+    mov [esp +  2], cx   ; (iter l_1)
+    mov [esp     ], bx   ; elem size
 
-    mov ecx, 20 ; (len * char_size)
+    ; copy source into destination
+    push esi    ; save origin addresses
+    push edi
+    mov ecx, source_byte_len
     cld
-    rep movsb
+    rep movsb   ; copy esi into edi
+    pop edi     ; recover addresses
+    pop esi
 
 ; ### use algorithm to the everyone elem
-    mov cx, [esp]
+    mov cx, [esp + 2]
 l_1:
-    mov [esp], cx   ; save iter
-
-    ; set current pos
-    xor eax, eax
-    mov ax, [esp + 10]
-    mov [esp + 12], ax
-    ; reset min value
-    mov [esp + 8], word 0xFF
-
-l_2:    ; ### swap elems
     mov [esp + 2], cx   ; save iter
 
+    ; set l_2 offset
+    mov ax, [esp + 6]
+    mov [esp + 8], ax
+    ; reset min value address
+    mov [esp + 10], ax
 
-    ; compare two values
+; ### find minimum
+    mov cx, [esp + 2]   ; start with (l_1) iter value
+l_2:
+    mov [esp + 4], cx   ; save iter
+
+
+    ; compare two values (current and min)    ; todo: compare 2,4,8 bytes value
     xor eax, eax
     xor ebx, ebx
-    mov bx, [esp + 12]              ; current offset
-    mov ax, [destination + ebx]     ; current value
-    ; debug: print array
-    ; call printPrimeNum
-
-    cmp ax, [esp + 8]  ; if (A[i] > min) then nothing
-    ja above
-    ; save new min value
-    mov [esp + 8], ax
-    ; save new min value pos
-    mov bx, [esp + 12]
-    mov [esp + 6], bx
-above:
-
-    ; make another step (l_1)
-    mov bx, [esp + 4]
-    add [esp + 12], bx
-
-    xor ebx, ebx
     xor ecx, ecx
+    xor edx, edx
+    ; num A (current)
+    mov cx, [esp + 8]
+    mov ax, [destination + ecx]
+    ; num B (last min)
+    mov dx, [esp + 10]
+    mov bx, [destination + edx]
 
-    mov esi, source
-    mov edi, destination
-    mov bx, 2
-    mov cx, 10
-    ; call sort
-    call printArray
+    ; ; debug: print min value
+    ; push ax
+    ; push bx
+    ; call printPrimeNum
+    ; call printLF
+    ; pop bx
+    ; pop ax
 
+    cmp ax, bx  ; if (A[i] < min) save new min value
+    ja cont    ; if above -> do nothing
+    mov ax, [esp + 8]   ; get current pos
+    mov [esp + 10], ax  ; save min value pos in dest
+cont:
+    ; next elem address offset (l_2)
+    mov ax, [esp]
+    add [esp + 8], ax
+    ; recover iter
+    xor ecx, ecx
+    mov cx, [esp + 4]
+    loop l_2
+; end loop (l_2)
+
+    ; swap
+    xor edx, edx
+    mov dx, [esp + 10]
+    mov ax, [destination + edx] ; save min (min -> A)
+    mov dx, [esp + 6]
+    mov bx, [destination + edx] ; save cur (cur -> B)
+    ;
+    mov dx, [esp + 10]
+    mov [destination + edx], bx ; B -> min
+    mov dx, [esp + 6]
+    mov [destination + edx], ax ; A -> cur
+
+    ; ; debug: print dest
+    ; push esi
+    ; mov esi, destination
+    ; mov bx, 2
+    ; mov cx, 10
+    ; call printArray
+    ; pop esi
+
+    ; next elem address offset (l_1)
+    mov ax, [esp]
+    add [esp + 6], ax
     ; recover iter
     xor ecx, ecx
     mov cx, [esp + 2]
-    loop l_2
-; end loop
-
-
-    ; swap two values
-    xor eax, eax
-    xor ebx, ebx
-    ;
-    mov ax, [esp + 10]  ; offset
-    mov bx, [esp + 6]   ; offset min value
-    ;
-    mov cx, [destination + eax]
-    mov dx, [destination + eax]
-    mov [destination + eax], dx
-    mov [destination + ebx], cx
-    
-    ; debug: print min value
-    ; xor eax, eax
-    ; mov ax, [esp + 8]
-    ; call printPrimeNum
-    call printLF
-
-    ; make another step (l_1)
-    mov bx, [esp + 4]
-    add [esp + 10], bx
-
-    ; recover iter
-    xor ecx, ecx
-    mov cx, [esp]
     dec cx
     jnz l_1
-    ; loop l_1
-; end loop
+; end loop (l_1)
 
-    add esp, 16
+    ; final actions
+    add esp, 12
+    xor ecx, ecx
+    xor ebx, ebx
+    pop cx
+    pop bx
     ret
 
+;     ; debug: print min value
+;     xor eax, eax
+;     xor ebx, ebx
+;     mov bx, [esp + 10]
+;     mov ax, [destination + ebx]
+;     call printPrimeNum
+
+;     ; swap two values
+;     xor eax, eax
+;     xor ebx, ebx
+;     ;
+;     mov ax, [esp + 10]  ; offset
+;     mov bx, [esp + 6]   ; offset min value
+;     ;
+;     mov cx, [destination + eax]
+;     mov dx, [destination + eax]
+;     mov [destination + eax], dx
+;     mov [destination + ebx], cx
+    
+;     ; debug: print min value
+;     ; xor eax, eax
+;     ; mov ax, [esp + 8]
+;     ; call printPrimeNum
+;     call printLF
+
+;     ; make another step (l_1)
+;     mov bx, [esp + 4]
+;     add [esp + 10], bx
+
+;     ; recover iter
+;     xor ecx, ecx
+;     mov cx, [esp]
+;     dec cx
+;     jnz l_1
+;     ; loop l_1
+; ; end loop
+
+    ; add esp, 16
+    ; xor ecx, ecx
+    ; xor ebx, ebx
+    ; pop cx
+    ; pop bx
+    ; ; pop edi
+    ; ; pop esi
+    ; ret
 
 
-printArray:
-    push ebx    ; # note: push for showing the immutability of a number
+
+printArray: ; fn printArray(source: esi) -> void
+    push esi    ; # note: <push> for showing the immutability of a number
+    push edi
+    push ebx
     push ecx
-    sub esp, 16
-    mov [esp + 12], esi      ; source
-    mov [esp +  8], ebx      ; num size
-    mov [esp +  4], dword 0  ; pos-offset (changeable)
-    mov [esp     ], ecx      ; iter/len   (changeable)
+    sub esp, 12
+    mov [esp + 8], esi      ; source
+    mov [esp + 4], ebx      ; num size (in bytes)
+    mov [esp    ], ecx      ; iter/len   (changeable)
 
 l_3:
     mov [esp], ecx   ; save iter
     
-    ; preparation
-    mov eax, 0
-    mov [buffer], eax       ; clear buffer
-    mov esi, [esp + 12]     ; recover source
+    ; prepare buffer
+    mov dword [buffer], 0   ; clear buffer
     mov edi, buffer         ; recover destination
 
     ; copy part of source
-    add esi, [esp + 4]  ; begin point
-    mov ecx, 2  ; size
+    mov ecx, [esp + 4]  ; how much bytes need to copy
     cld
-    rep movsb   ; copy bytes
+    rep movsb           ; copy bytes
 
     ; print value
+    mov [esp + 8], esi     ; save esi
     mov esi, [buffer]
     call printInt
-
-    ; update offset
-    mov eax, [esp + 8]
-    add [esp + 4], eax
+    mov esi, [esp + 8]     ; recover esi
 
     ; print tiny space between characters
     mov eax, ' '
@@ -174,19 +226,23 @@ l_3:
     mov ecx, [esp]
     loop l_3
 ; loop end
-    call printLF    ; final feedline
+    call printLF    ; print feedline
 
     ; free memory and recover values
-    mov esi, [esp + 12]
-    add esp, 16
+    mov esi, [esp + 8]
+    add esp, 12
     pop ecx
     pop ebx
+    pop edi
+    pop esi
     ret
 
 section .bss
-    destination: resb ARRAY_LEN
+    destination: resb source_byte_len
     buffer: resb 4
 
 section .data
-    source dw   9, 8, 7, 6, 5, 4, 3, 2, 1
-    array_len equ $ - source
+    source dw   9, 80, 7, 66, 55, 4, 3, 2, 0, 1
+    ; source dw   9, 8, 7, 6, 5, 4, 3, 2, 0, 1
+    ; source dw   0, 2, 3, 2, 7, 9, 4, 2, 8, 1
+    source_byte_len equ $ - source

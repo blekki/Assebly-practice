@@ -15,7 +15,7 @@ _start:
 
     mov esi, source
     mov edi, destination
-    mov bx, 2
+    mov bx, 4
     mov cx, 10
     call printArray     ; print unsorted data
     call sort           ; sort
@@ -64,27 +64,21 @@ l_1:
 l_2:
     mov [esp + 4], cx   ; save iter
 
-
     ; compare two values (current and min)    ; todo: compare 2,4,8 bytes value
     xor eax, eax
     xor ebx, ebx
     xor ecx, ecx
     xor edx, edx
 
-    ; todo: дати можливість витягувати скільки треба бaйтів
-    ; num A (current)
-    mov cx, [esp + 8]
-    mov ax, [destination + ecx]     ; todo: need update
-    ; num B (last min)
-    mov dx, [esp + 10]
-    mov bx, [destination + edx]     ; todo: need update
-
     ; copy bytes
+    mov cx, [esp + 8]   ; num A offse (current num)
+    mov dx, [esp + 10]  ; num B offse (last min)
+    ;
     cmp word [esp], 1   ; copy 1 byte
     je copy_byte
-    cmp word [esp], 2   ; copy 2 byte
+    cmp word [esp], 2   ; copy 2 bytes
     je copy_word
-    cmp word [esp], 4   ; copy 4 byte
+    cmp word [esp], 4   ; copy 4 bytes
     je copy_dword
 copy_byte:
     mov al, [destination + ecx]
@@ -99,14 +93,6 @@ copy_dword:
     mov ebx, [destination + edx]
 copy_done:
 
-    ; ; debug: print min value
-    ; push ax
-    ; push bx
-    ; call printPrimeNum
-    ; call printLF
-    ; pop bx
-    ; pop ax
-
     cmp eax, ebx  ; if (A[i] < min) save new min value
     ja cont    ; if above -> do nothing
     mov ax, [esp + 8]   ; get current pos
@@ -120,7 +106,6 @@ cont:
     mov cx, [esp + 4]
     dec cx
     jnz l_2
-    ; loop l_2
 ; end loop (l_2)
 
     ; swap bytes
@@ -132,7 +117,6 @@ cont:
     cmp word [esp], 4   ; copy 4 byte
     je swap_dword
 swap_byte:
-    jmp swap_done
     mov dx, [esp + 10]
     mov al, [destination + edx] ; save min (min -> A)
     mov dx, [esp + 6]
@@ -142,36 +126,29 @@ swap_byte:
     mov [destination + edx], bl ; B -> min
     mov dx, [esp + 6]
     mov [destination + edx], al ; A -> cur
+    jmp swap_done
 swap_word:
     mov dx, [esp + 10]
-    mov ax, [destination + edx] ; save min (min -> A)
+    mov ax, [destination + edx]
     mov dx, [esp + 6]
-    mov bx, [destination + edx] ; save cur (cur -> B)
+    mov bx, [destination + edx]
     ;
     mov dx, [esp + 10]
-    mov [destination + edx], bx ; B -> min
+    mov [destination + edx], bx
     mov dx, [esp + 6]
-    mov [destination + edx], ax ; A -> cur
+    mov [destination + edx], ax
     jmp swap_done
 swap_dword:
     mov dx, [esp + 10]
-    mov eax, [destination + edx] ; save min (min -> A)
+    mov eax, [destination + edx]
     mov dx, [esp + 6]
-    mov ebx, [destination + edx] ; save cur (cur -> B)
+    mov ebx, [destination + edx]
     ;
     mov dx, [esp + 10]
-    mov [destination + edx], ebx ; B -> min
+    mov [destination + edx], ebx
     mov dx, [esp + 6]
-    mov [destination + edx], eax ; A -> cur
+    mov [destination + edx], eax
 swap_done:
-
-    ; ; debug: print dest
-    ; push esi
-    ; mov esi, destination
-    ; mov bx, 2
-    ; mov cx, 10
-    ; call printArray
-    ; pop esi
 
     ; next elem address offset (l_1)
     mov ax, [esp]
@@ -243,6 +220,6 @@ section .bss
 
 section .data
     ; source db   9, 8, 7, 6, 5, 44, 3, 2, 0, 1
-    source dw   9, 1880, 7, 66, 5, 44, 3, 2, 0, 1
-    ; source dd   2000, 50000, 3000, 4000, 0, 1, 6000, 80000, 9, 20
+    ; source dw   9, 1880, 7, 66, 5, 44, 3, 2, 0, 1
+    source dd   2000, 50000, 3000, 4000, 0, 1, 6000, 80000, 9, 20
     source_byte_len equ $ - source

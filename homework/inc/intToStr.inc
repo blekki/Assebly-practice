@@ -8,7 +8,13 @@ section .text
 intToStr:
     ; esi = source
     mov     [num_len], byte 0
-    mov     edi, buffer             ; destinations
+
+    ; prepare destinations
+    mov     ecx, BUFFER_MAX_LEN     ; how much times repeat
+    mov     edi, buffer             ; buffer address
+    mov     al, 0                   ; value
+    rep     stosb                   ; store values
+    mov     edi, buffer             ; get fresh buffer
 
     ; check does (esi != 0)
     cmp     esi, 0

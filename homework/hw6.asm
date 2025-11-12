@@ -20,11 +20,10 @@ _start:
     mov edi, destination
     mov bx, 2
     mov cx, 10
-    call printArray
-    call sort
+    call printArray     ; print unsorted data
+    call sort           ; sort
     mov esi, edi
-    call printArray
-
+    call printArray     ; print sorted data
 
     mov eax, 1
     int 0x80
@@ -142,54 +141,6 @@ cont:
     pop bx
     ret
 
-;     ; debug: print min value
-;     xor eax, eax
-;     xor ebx, ebx
-;     mov bx, [esp + 10]
-;     mov ax, [destination + ebx]
-;     call printPrimeNum
-
-;     ; swap two values
-;     xor eax, eax
-;     xor ebx, ebx
-;     ;
-;     mov ax, [esp + 10]  ; offset
-;     mov bx, [esp + 6]   ; offset min value
-;     ;
-;     mov cx, [destination + eax]
-;     mov dx, [destination + eax]
-;     mov [destination + eax], dx
-;     mov [destination + ebx], cx
-    
-;     ; debug: print min value
-;     ; xor eax, eax
-;     ; mov ax, [esp + 8]
-;     ; call printPrimeNum
-;     call printLF
-
-;     ; make another step (l_1)
-;     mov bx, [esp + 4]
-;     add [esp + 10], bx
-
-;     ; recover iter
-;     xor ecx, ecx
-;     mov cx, [esp]
-;     dec cx
-;     jnz l_1
-;     ; loop l_1
-; ; end loop
-
-    ; add esp, 16
-    ; xor ecx, ecx
-    ; xor ebx, ebx
-    ; pop cx
-    ; pop bx
-    ; ; pop edi
-    ; ; pop esi
-    ; ret
-
-
-
 printArray: ; fn printArray(source: esi) -> void
     push esi    ; # note: <push> for showing the immutability of a number
     push edi
@@ -199,7 +150,7 @@ printArray: ; fn printArray(source: esi) -> void
     mov [esp + 8], esi      ; source
     mov [esp + 4], ebx      ; num size (in bytes)
     mov [esp    ], ecx      ; iter/len   (changeable)
-
+    
 l_3:
     mov [esp], ecx   ; save iter
     
@@ -211,12 +162,12 @@ l_3:
     mov ecx, [esp + 4]  ; how much bytes need to copy
     cld
     rep movsb           ; copy bytes
-
+    
     ; print value
-    mov [esp + 8], esi     ; save esi
-    mov esi, [buffer]
+    mov [esp + 8], esi      ; save esi
+    mov esi, [buffer]       ; move edi into esi
     call printInt
-    mov esi, [esp + 8]     ; recover esi
+    mov esi, [esp + 8]      ; recover esi
 
     ; print tiny space between characters
     mov eax, ' '
@@ -229,7 +180,6 @@ l_3:
     call printLF    ; print feedline
 
     ; free memory and recover values
-    mov esi, [esp + 8]
     add esp, 12
     pop ecx
     pop ebx
@@ -242,7 +192,7 @@ section .bss
     buffer: resb 4
 
 section .data
-    source dw   9, 80, 7, 66, 55, 4, 3, 2, 0, 1
+    source dw   9, 1880, 7, 66, 5, 44, 3, 2, 0, 1
     ; source dw   9, 8, 7, 6, 5, 4, 3, 2, 0, 1
     ; source dw   0, 2, 3, 2, 7, 9, 4, 2, 8, 1
     source_byte_len equ $ - source

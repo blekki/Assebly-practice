@@ -136,6 +136,7 @@ The reposetory contains a couple specific projects that work with include **(.in
 * ```hw4-1```
 * ```hw4-2```
 * ```hw5```
+* ```hw6```
 
 ### Preparation
 
